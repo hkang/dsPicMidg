@@ -158,7 +158,25 @@ int main(int argc, char** argv) {
 			
 			printf("checksum 0 and checksum1 are..%02X %02X\n",checksum0, checksum1);
 			if ((checksum0==message[MESSAGEBUFSIZE-2]) && (checksum1==message[MESSAGEBUFSIZE-1])) {
+
 				printf("The packet is valid...\n");
+			}else {
+				printf("At least one of the checksum test FAILED. Message Corrupted.\n");
+				
+				for (l=8, msg_corrupted=0; l< MESSAGEBUFSIZE-1 || msg_corrupted==1;l++) {
+					if ((message[l-3]==0x81) && (message[l-2]==0xA1) && (message[l-1]==0x0A) && 
+						(message[l]==0x27) && (l<MESSAGEBUFSIZE-2)) {
+						if ((checksum0!=message[MESSAGEBUFSIZE-2]) || (checksum1!=message[MESSAGEBUFSIZE-1])) {
+							message[0]=message[l-3];
+							message[1]=message[l-2];
+							message[2]=message[l-1];
+							message[3]=message[l];
+							msg_corrupted=1;
+							printf("since some of the payload is not transfered and a new packet is detected. Re-Writing from the begining... \n");
+						}
+					}
+				}
+					
 			}
 
 			
@@ -166,19 +184,7 @@ int main(int argc, char** argv) {
 /*		Message Corruption Detection Function									   */
 /***********************************************************************************/	
 
-			for (l=8, msg_corrupted=0; l< MESSAGEBUFSIZE-1 || msg_corrupted==1;l++) {
-				if ((message[l-3]==0x81) && (message[l-2]==0xA1) && (message[l-1]==0x0A) && 
-					(message[l]==0x27) && (l<MESSAGEBUFSIZE-2)) {
-					if ((checksum0!=message[MESSAGEBUFSIZE-2]) || (checksum1!=message[MESSAGEBUFSIZE-1])) {
-						message[0]=message[l-3];
-						message[1]=message[l-2];
-						message[2]=message[l-1];
-						message[3]=message[l];
-						msg_corrupted=1;
-						printf("Possibly some of payloads of the packet is corrupted or dropped out. Re-writing from the beginning... \n");
-					}
-				}
-			}
+
 		}
 		//printing the only message that I want. 
 /***********************************************************************************/		
@@ -187,4 +193,21 @@ int main(int argc, char** argv) {
 	fclose(input);
 	exit(0);
 }
+
+/*********************************************************************************************************************
+ for (l=8, msg_corrupted=0; l< MESSAGEBUFSIZE-1 || msg_corrupted==1;l++) {
+ if ((message[l-3]==0x81) && (message[l-2]==0xA1) && (message[l-1]==0x0A) && 
+ (message[l]==0x27) && (l<MESSAGEBUFSIZE-2)) {
+ if ((checksum0!=message[MESSAGEBUFSIZE-2]) || (checksum1!=message[MESSAGEBUFSIZE-1])) {
+ message[0]=message[l-3];
+ message[1]=message[l-2];
+ message[2]=message[l-1];
+ message[3]=message[l];
+ msg_corrupted=1;
+ printf("Possibly some of payloads of the packet is corrupted or dropped out. Re-writing from the beginning... \n");
+ }
+ }
+ }				
+ ********************************************************************************************************************/
+
 
